@@ -1,31 +1,41 @@
 public class Player {
-    private int weaponDamage, weaponLevel;
+    private int weaponLevel, baseDamage;
+    private double damageMultiplier;
 
     public Player(){
         weaponLevel = 1;
-        weaponDamage = 50;
+        baseDamage = 50;
+        damageMultiplier = 1;
     }
 
     public boolean canKillMonster(int health) {
-        return weaponDamage >= health;
+        return getTotalDamage() >= health;
     }
 
-    public int upgradeWeapon() {
+    public double upgradeBaseStats() {
         weaponLevel++;
-        weaponDamage += 50;
-        return weaponDamage;
+        baseDamage += 10;
+        return getTotalDamage();
+    }
+
+    public double getTotalDamage() {
+        return damageMultiplier * baseDamage;
     }
 
     public int getWeaponLevel () {
         return weaponLevel;
     }
 
-    public int getWeaponDamage () {
-        return weaponDamage;
+    public double getDamageMultiplier () {
+        return damageMultiplier;
+    }
+
+    public void setDamageMultiplier (double n) {
+        damageMultiplier = n;
     }
 
     @Override
     public String toString() {
-        return "Player had a weapon level " + weaponLevel + ", it did " + weaponDamage + " damage.";
+        return "Player had a weapon level " + weaponLevel + ", it did " + getTotalDamage() + " damage.";
     }
 }

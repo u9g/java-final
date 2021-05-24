@@ -1,19 +1,22 @@
 public class PlayerProgression {
     public static final int MAX_STAGE = 6;
-    public static final int WAVES_PER_STAGE = 20;
-    private int stage, wave, wavesTried, luckRoundsSkipped;
-    private double luck;
+    public static final int WAVES_PER_STAGE = 19;
+    private int stage, wave, luckMultiplier, wavesTried, luckRoundsSkipped;
+    private double luck, waveSkipChance;
+
     public PlayerProgression() {
         stage = 0;
         wave = 0;
         wavesTried = 0;
         luckRoundsSkipped = 0;
+        luckMultiplier = 1;
+        waveSkipChance = 0.0;
     }
 
     public void failWave() {
         double random = ((double)((int) (Math.random() * 20) + 1) / 100); // random # 0 -> .2
-        luck += random;
-        System.out.println("You lost this round, but gained " + random + " luck.");
+        luck += random * luckMultiplier;
+        System.out.println("+ " + random + " luck");
     }
 
     public void finishWave() {
@@ -22,7 +25,7 @@ public class PlayerProgression {
 
     public int startWave() {
         wavesTried++;
-
+        //TODO: rename wave skip chance to stage skip chance
         if (wave >= WAVES_PER_STAGE) {
             wave = 0;
             stage++;
@@ -37,6 +40,14 @@ public class PlayerProgression {
         }
 
         return (int) (Math.random() * (((stage + 1) * 50) * wave) + 59);
+    }
+
+    public void setWaveSkipChance (double n) {
+        waveSkipChance = n;
+    }
+
+    public double getWaveSkipChance () {
+        return waveSkipChance;
     }
 
     public int getStage() {
@@ -73,6 +84,14 @@ public class PlayerProgression {
 
     public int getWave() {
         return wave;
+    }
+
+    public int getLuckMultiplier(){
+        return luckMultiplier;
+    }
+
+    public void setLuckMultiplier(int n){
+        luckMultiplier = n;
     }
 
     @Override
