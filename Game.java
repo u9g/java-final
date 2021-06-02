@@ -26,7 +26,7 @@ class Game {
             String contMsg = "Would you like to play again? (type \"yes\" to play again, \"no\" to end the game.)";
             System.out.println(contMsg);
             System.out.print(": ");
-            playAgain = AwaitInput(scanner, new String[] { "yes", "no" }, contMsg).equals("no");// continue when response is not equal to no            
+            playAgain = AwaitInput(scanner, new String[] { "yes", "no" }, contMsg).equals("yes"); // continue when response is equal to yes
         }
     }
 
