@@ -12,9 +12,11 @@ public class Player {
         return getTotalDamage() >= health;
     }
 
-    public double upgradeBaseStats() {
+    public double upgradeBaseStats(int stage) {
         weaponLevel++;
-        baseDamage += 10;
+        int dmgIncrease = (int) (Math.random() * stage) + 1;
+        System.out.println("+ " + dmgIncrease + " damage");
+        baseDamage += dmgIncrease;
         return getTotalDamage();
     }
 

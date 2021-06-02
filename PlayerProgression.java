@@ -31,11 +31,17 @@ public class PlayerProgression {
             stage++;
         }
 
-        if (luck >= 1.0) {
-            System.out.println("You lucked out, you skip this level.");
+        // if (luck >= 1.0) {
+        //     System.out.println("You finish this wave with luck, you skip this wave.");
+        //     wave++;
+        //     luckRoundsSkipped++;
+        //     luck = 0;
+        //     return 0;
+        // }
+
+        if (Math.random() <= waveSkipChance) {
+            System.out.println("You skipped this wave with your artifact.");
             wave++;
-            luckRoundsSkipped++;
-            luck = 0;
             return 0;
         }
 
