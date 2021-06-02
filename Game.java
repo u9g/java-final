@@ -1,27 +1,33 @@
 import java.util.Scanner;
 
 class Game {
-    public static final boolean DEBUG = true;
     public static void main(String[] args) {
-        Scanner input = new Scanner(System.in);
-        ContinueDemo(input);
-        Backstory(input);
-        Intro(input);
-        PlayerProgression p = new PlayerProgression();
-        Player player = new Player();
+        boolean playAgain = true;
+        Scanner scanner = new Scanner(System.in);
+        while (playAgain) {
+            ContinueDemo(scanner);
+            Backstory(scanner);
+            Intro(scanner);
+            PlayerProgression p = new PlayerProgression();
+            Player player = new Player();
+            
+            while (p.getStage() != PlayerProgression.MAX_STAGE + 1) {
+                AttackMonster(scanner, p, player);
+            }
+            
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            
+            System.out.println("You have successfully finished the forest of monsters. Pat yourself on the back!");
+            System.out.println(p.toString());
+            System.out.println(player.toString());
 
-        System.out.println("Starting at " + p.getStageName() + " with a level " + player.getWeaponLevel() + " weapon.");
-        while (p.getStage() != PlayerProgression.MAX_STAGE + 1) {
-            AttackMonster(input, p, player);
+            String contMsg = "Would you like to play again? (type \"yes\" to play again, \"no\" to end the game.)";
+            System.out.println(contMsg);
+            System.out.print(": ");
+            playAgain = AwaitInput(scanner, new String[] { "yes", "no" }, contMsg).equals("no");// continue when response is not equal to no            
         }
-
-        System.out.println();
-        System.out.println();
-        System.out.println();
-
-        System.out.println("You have successfully finished the forest of monsters. Pat yourself on the back!");
-        System.out.println(p.toString());
-        System.out.println(player.toString());
     }
 
     public static void ContinueDemo (Scanner input) {
@@ -45,8 +51,12 @@ class Game {
 
     public static void Intro(Scanner input) {
         System.out.println("To start: a bit about the forest.");
-        System.out.println("You will fight waves of mobs with slowly increasing health, each having a chance of giving you a better weapon.");
-        System.out.println("If you fail a round, don't worry, you gain luck. When you get 1.0 luck, you will skip a wave, and your luck will be reset down to 0.");
+        System.out.println("You will fight waves of monsters with slowly increasing health, each having a chance of giving you a better weapon.");
+        System.out.println("If you fail a round, don't worry, you gain luck. When you get 1.0 luck, you will be able to skip a wave, and your luck will be reset down to 0. >>");
+        input.nextLine();
+        System.out.println("Each round you will be given the choice to attack the monster, or to use luck points to skip the monster.");
+        System.out.println("If you are a bit below the health of a mob, you can try to count on the critical hit chance from an artifact you got.");
+        System.out.println("If the critical hit happens, you do double damage for that hit.");
         System.out.println("Good luck :) >>");
         input.nextLine();
     }
@@ -60,67 +70,76 @@ class Game {
     public static void AttackMonster(Scanner scanner, PlayerProgression p, Player player) {
         ClearWindow();
         int monsterHealth = p.startWave();
-        boolean finishedWave = player.canKillMonster(monsterHealth);
+        boolean finishedWave = player.tryKillMonster(monsterHealth);
         
-        if (DEBUG && monsterHealth > 0) {
-            System.out.println("Weapon Damage: " + truncate(player.getTotalDamage(), 0) + " | Monster Health: " + monsterHealth);
-            String contMsg = "Type \"continue\" to go to try this wave or \"skip\" to use luck to skip this round.";
+        if (monsterHealth > 0 && p.canUseLuck()) {
+            System.out.println("Weapon Damage: " + Truncate(player.getTotalDamage(), 0) + " | Monster Health: " + monsterHealth + " | Stage: " + p.getStage() + " / " + PlayerProgression.MAX_STAGE + " | Wave: " + (p.getWave() + 1) + " / " + (PlayerProgression.WAVES_PER_STAGE));
+            String contMsg = "Type \"try\" to try this wave or \"skip\" to use luck to skip this round.";
             System.out.println(contMsg);
             System.out.print(": ");
             String commandInput = scanner.nextLine();
-            
-            if (!commandInput.equals("continue")) {
-                commandInput = awaitInput(scanner, new String[] { "continue" }, contMsg);
+
+            if (!commandInput.equals("try") && !commandInput.equals("skip")) {
+                commandInput = AwaitInput(scanner, new String[] { "try", "skip" }, contMsg);
             }
+                            
+            if (commandInput.equals("try")) {
+                if (finishedWave) FinishedWave(player, p, scanner);
+                else FailWave(player, p, scanner);
+            } else if (commandInput.equals("skip")) {
+                p.useLuck();
+            }
+        } else if (monsterHealth > 0) {
+            System.out.println("Weapon Damage: " + Truncate(player.getTotalDamage(), 0) + " | Monster Health: " + monsterHealth + " | Stage: " + p.getStage() + " / " + PlayerProgression.MAX_STAGE + " | Wave: " + (p.getWave() + 1) + " / " + (PlayerProgression.WAVES_PER_STAGE));
+            String contMsg = "Type \"try\" to try this wave. (" + Truncate(p.getLuck(), 2) + " / 1.0 luck for next skip)";
+            System.out.println(contMsg);
+            System.out.print(": ");
+            String commandInput = scanner.nextLine();
+
+            if (!commandInput.equals("try")) {
+                commandInput = AwaitInput(scanner, new String[] { "try" }, contMsg);
+            }
+
+            if (finishedWave) FinishedWave(player, p, scanner);
+            else FailWave(player, p, scanner);
         } else { // monster had 0 health (skipped)
             System.out.println("Type \"continue\" to go to the next wave.");
             System.out.print(": ");
             String commandInput = scanner.nextLine();
             
             if (!commandInput.equals("continue")) {
-                commandInput = awaitInput(scanner, new String[] { "continue" }, "Type \"continue\" to go to the next wave.");
+                commandInput = AwaitInput(scanner, new String[] { "continue" }, "Type \"continue\" to go to the next wave.");
             }
         }
-            
-        if (finishedWave) {
-            p.finishWave();
-            player.upgradeBaseStats(p.getStage());
-            System.out.println("You " 
-            + (finishedWave ? "finished" : "didn't finish") 
-            + " the wave. You have " + (PlayerProgression.WAVES_PER_STAGE - p.getWave() + 1) 
-            + " waves to finish " + p.getStageName());
-        } else {
-            p.failWave();
-            player.upgradeBaseStats(p.getStage());
-            System.out.println("You didn't finish the wave. "
-            + "You have " + (PlayerProgression.WAVES_PER_STAGE - p.getWave() + 1) 
-            + " waves to finish " + p.getStageName());
-        }
-        
+
         ClearWindow();
-        if (Math.random() <= .4) { // 40% to find a new artifact
-            // TODO: crit chance
-            int luckMult = (int) (Math.random() * p.getStage()) + 1;
-            double damageMult = truncate((Math.random() * p.getStage()) * .1, 2) + 1;
-            double waveSkipChance = truncate(Math.random() * p.getStage(), 2)  / 100;
-            if (luckMult != p.getLuckMultiplier() || damageMult != player.getDamageMultiplier() || waveSkipChance != p.getWaveSkipChance()) {   
-                System.out.println("Congrats, you found a artifact on the ground.\n\nIf you chose to equip this artifact, your new stats will:");
-                System.out.println("Luck Multiplier: " + luckMult + " | Base Damage Multiplier: " + damageMult + " | Wave Skip Chance: " + waveSkipChance);
+
+        if (Math.random() <= .25) { // 25% to find a new artifact
+            int luckMult = (int) (Math.random() * (p.getStage() + 1) + 1);
+            double damageMult = (((int)(Math.random() * p.getStage() + 1)) / 10.0) + 1;
+            double waveSkipChance = ((int)(Math.random() * p.getStage() + 1)) / 100.0;
+            double critChance = ((int)(Math.random() * p.getStage())) / 10.0;
+            if (luckMult != p.getLuckMultiplier() || damageMult != player.getDamageMultiplier() || waveSkipChance != p.getWaveSkipChance() || critChance != player.getCritChance()) {   
+                System.out.println("Congrats, you found an artifact on the ground.\n\nIf you chose to equip this artifact, your new stats will:");
+                System.out.println("Luck Multiplier: " + luckMult + " | Base Damage Multiplier: " + damageMult + " | Wave Skip Chance: " + waveSkipChance + " | Critical chance: " +  critChance);
                 System.out.println();
                 System.out.println("Your old artifact stats: ");
-                System.out.println("Luck Multiplier: " + p.getLuckMultiplier() + " | Base Damage Multiplier: " + player.getDamageMultiplier() + " | Wave Skip Chance: " + p.getWaveSkipChance());
+                System.out.println("Luck Multiplier: " + p.getLuckMultiplier() + " | Base Damage Multiplier: " + player.getDamageMultiplier() + " | Wave Skip Chance: " + p.getWaveSkipChance() + " | Critical chance: " + player.getCritChance());
                 System.out.println();
                 System.out.println("To pickup the item, type \"upgrade\", to skip this item, type \"skip\".");
+                System.out.print(": ");
 
-                String artifactResponse = "";
+                String artifactResponse = scanner.nextLine();
                 if (!artifactResponse.equals("upgrade") && !artifactResponse.equals("skip")) {
-                    artifactResponse = awaitInput(scanner, new String[] {"upgrade", "skip"}, "To pickup the item, type \"upgrade\", to skip this item, type \"skip\".");
+                    artifactResponse = AwaitInput(scanner, new String[] {"upgrade", "skip"}, "To pickup the item, type \"upgrade\", to skip this item, type \"skip\".");
                 }
                 
                 if (artifactResponse.equals("upgrade")) {
                     p.setLuckMultiplier(luckMult);
-                    player.setDamageMultiplier(damageMult);
                     p.setWaveSkipChance(waveSkipChance);
+                    player.setDamageMultiplier(damageMult);
+                    player.setCritChance(critChance);
+
                     System.out.println("Good choice, you equipt the new artifact.");
                 } else {
                     System.out.println("You skipped this artifact, don't worry, there will probably be more along the way.");
@@ -130,7 +149,21 @@ class Game {
         
     }
 
-    public static String awaitInput(Scanner scanner, String[] inputs, String continueMessage) {
+    public static void FinishedWave(Player player, PlayerProgression p, Scanner s) {
+        p.finishWave();
+        player.upgradeBaseStats(p.getStage());
+        System.out.print("You finished this wave. >>");
+        s.nextLine();
+    }
+    
+    public static void FailWave(Player player, PlayerProgression p, Scanner s) {
+        p.failWave();
+        player.upgradeBaseStats(p.getStage());
+        System.out.print("You failed this wave. >>");
+        s.nextLine();
+    }
+
+    public static String AwaitInput(Scanner scanner, String[] inputs, String continueMessage) {
         String commandInput = "";
         while (true) {
             for (String input : inputs) {
@@ -145,7 +178,7 @@ class Game {
         }
     }
     
-    public static double truncate(double value, int places) {
+    public static double Truncate(double value, int places) {
         double scale = Math.pow(10, places);
         return Math.round(value * scale) / scale;    
     }
