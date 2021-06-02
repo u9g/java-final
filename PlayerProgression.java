@@ -66,34 +66,6 @@ public class PlayerProgression {
         return stage;
     }
 
-    public String getStageName() {
-        String name = "";
-        switch (stage) {
-            case 0: 
-                name = "Heat springs";
-                break;
-            case 1: 
-                name = "Dry canyons";
-                break;
-            case 2: 
-                name = "Cool canyons";
-                break;
-            case 3: 
-                name = "Natural lakes";
-                break;
-            case 4: 
-                name = "Exquisite extensions";
-                break;
-            case 5: 
-                name = "Rapid rivers";
-                break;
-            case 6: 
-                name = "Intense icicles";
-                break;
-        }
-        return name;
-    }
-
     public int getWave() {
         return wave;
     }
